@@ -1,0 +1,33 @@
+# Scan output files
+*.json
+!package*.json
+
+# Daily tracking (will be created/managed by workflow)
+alerted_today.json
+
+# Temporary files
+tmp*
+temp*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Node modules (if we add JS/TS later)
+node_modules/
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local

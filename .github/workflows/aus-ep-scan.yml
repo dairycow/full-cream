@@ -1,0 +1,30 @@
+name: Australian Equity Price Scan
+
+on:
+  schedule:
+    # Every 30 minutes during ASX market hours (10:00-16:00 AEST = 23:00-05:00 UTC prev day)
+    - cron: '0,30 23,0,1,2,3,4,5 * * 1-5'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ticker-intersection:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Make scripts executable
+      run: |
+        chmod +x aus-ep-scan/tv_scan.sh
+        chmod +x aus-ep-scan/asx_ps_scrape.sh
+        chmod +x aus-ep-scan/find_intersection.sh
+    
+    - name: Run TradingView momentum scan
+      run: ./aus-ep-scan/tv_scan.sh momentum_tickers_raw.json
+        
+    - name: Run ASX price sensitive scan
+      run: ./aus-ep-scan/asx_ps_scrape.sh sensitive_tickers.json
+        
+    - name: Find intersection and trigger alert
+      run: ./aus-ep-scan/find_intersection.sh momentum_tickers_raw.json sensitive_tickers.json
