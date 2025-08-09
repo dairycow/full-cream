@@ -4,8 +4,8 @@
 # Uses only tools available in GitHub Actions runners by default
 
 OUTPUT_FILE="${1:-asx_price_sensitive.json}"
-# ASX_URL="https://www.asx.com.au/asx/v2/statistics/todayAnns.do"
-ASX_URL="https://www.asx.com.au/asx/v2/statistics/prevBusDayAnns.do"
+ASX_URL="https://www.asx.com.au/asx/v2/statistics/todayAnns.do"
+# ASX_URL="https://www.asx.com.au/asx/v2/statistics/prevBusDayAnns.do"
 
 # Fetch HTML and extract price sensitive tickers
 # Strategy: Find table rows containing pricesens img, then extract first cell content
