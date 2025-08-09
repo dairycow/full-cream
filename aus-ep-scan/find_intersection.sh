@@ -69,6 +69,50 @@ NEW_INTERSECTIONS=$(jq -n \
 NEW_COUNT=$(echo "$NEW_INTERSECTIONS" | jq 'length')
 echo "Found $NEW_COUNT new intersecting tickers (not yet alerted today)"
 
+# Write GitHub workflow summary
+write_github_summary() {
+  if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+    echo "## Australian Equity Price Scan Results" >> "$GITHUB_STEP_SUMMARY"
+    echo "" >> "$GITHUB_STEP_SUMMARY"
+    echo "**Scan Date:** $(date '+%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_STEP_SUMMARY"
+    echo "" >> "$GITHUB_STEP_SUMMARY"
+    
+    if [ "$NEW_COUNT" -gt 0 ]; then
+      echo "### NEW ALERTS: $NEW_COUNT Tickers" >> "$GITHUB_STEP_SUMMARY"
+      echo "" >> "$GITHUB_STEP_SUMMARY"
+      echo "The following tickers have both **5%+ momentum** and **price sensitive announcements**:" >> "$GITHUB_STEP_SUMMARY"
+      echo "" >> "$GITHUB_STEP_SUMMARY"
+      echo "| Ticker |" >> "$GITHUB_STEP_SUMMARY"
+      echo "|--------|" >> "$GITHUB_STEP_SUMMARY"
+      echo "$NEW_INTERSECTIONS" | jq -r '.[]' | while read ticker; do
+        echo "| $ticker |" >> "$GITHUB_STEP_SUMMARY"
+      done
+      echo "" >> "$GITHUB_STEP_SUMMARY"
+    else
+      echo "### No New Alerts" >> "$GITHUB_STEP_SUMMARY"
+      echo "" >> "$GITHUB_STEP_SUMMARY"
+      if [ "$TICKER_COUNT" -gt 0 ]; then
+        echo "Found $TICKER_COUNT intersecting tickers, but all were already alerted today." >> "$GITHUB_STEP_SUMMARY"
+      else
+        echo "No intersecting tickers found." >> "$GITHUB_STEP_SUMMARY"
+      fi
+      echo "" >> "$GITHUB_STEP_SUMMARY"
+    fi
+    
+    echo "### Summary Statistics" >> "$GITHUB_STEP_SUMMARY"
+    echo "" >> "$GITHUB_STEP_SUMMARY"
+    echo "- **Momentum tickers:** $(jq 'length' "$MOMENTUM_FILE")" >> "$GITHUB_STEP_SUMMARY"
+    echo "- **Price sensitive tickers:** $(jq 'length' "$SENSITIVE_FILE")" >> "$GITHUB_STEP_SUMMARY"
+    echo "- **Total intersections:** $TICKER_COUNT" >> "$GITHUB_STEP_SUMMARY"
+    echo "- **New alerts:** $NEW_COUNT" >> "$GITHUB_STEP_SUMMARY"
+    
+    if [ "$TICKER_COUNT" -gt "$NEW_COUNT" ]; then
+      echo "- **Previously alerted:** $((TICKER_COUNT - NEW_COUNT))" >> "$GITHUB_STEP_SUMMARY"
+    fi
+    echo "" >> "$GITHUB_STEP_SUMMARY"
+  fi
+}
+
 if [ "$NEW_COUNT" -gt 0 ]; then
   echo ""
   echo "NEW ALERT: Found $NEW_COUNT new tickers with both 5%+ momentum AND price sensitive announcements!"
@@ -101,5 +145,8 @@ else
   echo "Price sensitive tickers: $(jq -c '.' "$SENSITIVE_FILE")"
   echo "Scan completed successfully - no intersections"
 fi
+
+# Write the GitHub workflow summary
+write_github_summary
 
 exit 0
