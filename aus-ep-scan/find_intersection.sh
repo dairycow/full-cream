@@ -82,10 +82,10 @@ write_github_summary() {
       echo "" >> "$GITHUB_STEP_SUMMARY"
       echo "The following tickers have both **5%+ momentum** and **price sensitive announcements**:" >> "$GITHUB_STEP_SUMMARY"
       echo "" >> "$GITHUB_STEP_SUMMARY"
-      echo "| Ticker |" >> "$GITHUB_STEP_SUMMARY"
-      echo "|--------|" >> "$GITHUB_STEP_SUMMARY"
+      echo "| Ticker | Chart |" >> "$GITHUB_STEP_SUMMARY"
+      echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
       echo "$NEW_INTERSECTIONS" | jq -r '.[]' | while read ticker; do
-        echo "| $ticker |" >> "$GITHUB_STEP_SUMMARY"
+        echo "| $ticker | [View Chart](https://www.tradingview.com/chart/?symbol=ASX%3A$ticker) |" >> "$GITHUB_STEP_SUMMARY"
       done
       echo "" >> "$GITHUB_STEP_SUMMARY"
     else
