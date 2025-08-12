@@ -2,8 +2,8 @@ name: Australian Equity Price Scan
 
 on:
   schedule:
-    # Every 30 minutes during ASX market hours (10:00-16:00 AEST = 23:00-05:00 UTC prev day)
-    - cron: '0,30 23,0,1,2,3,4,5 * * 1-5'
+    # At 11:00 AM and 2:00 PM AEST (00:00 and 03:00 UTC)
+    - cron: '0 0,3 * * 1-5'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
