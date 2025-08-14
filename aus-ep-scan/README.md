@@ -29,20 +29,21 @@ jq '.[]' my_momentum.json  # List all tickers
 jq 'length' my_momentum.json  # Count
 ```
 
-### `asx_ps_scrape.sh`
-Scrapes ASX website for stocks with price-sensitive announcements.
+### `asx_ann_scan.sh`
+Scans ASX announcements for price-sensitive announcements with headers.
 
 **Usage:**
 ```bash
-./asx_ps_scrape.sh [output_file]
+./asx_ann_scan.sh [output_file]
 ```
 
-**Default output:** `asx_price_sensitive.json`
+**Default output:** `asx_announcements.json`
 
 **Example:**
 ```bash
-./asx_ps_scrape.sh my_announcements.json
-jq '.[]' my_announcements.json  # List all tickers
+./asx_ann_scan.sh my_announcements.json
+jq '.[] | .ticker' my_announcements.json  # List all tickers
+jq '.[] | "\(.ticker): \(.header)"' my_announcements.json  # List with headers
 ```
 
 ## Data Sources
@@ -63,9 +64,25 @@ The GitHub Actions workflow (`../.github/workflows/aus-ep-scan.yml`) runs this s
 
 ## Output Format
 
-Both scripts output clean JSON arrays:
+**TradingView Scanner (`tv_scan.sh`):**
 ```json
-["BHP", "CBA", "WBC"]
+["ASX:BHP", "ASX:CBA", "ASX:WBC"]
 ```
 
-Perfect for further processing with `jq` or integration with other tools.
+**ASX Announcements (`asx_ann_scan.sh`):**
+```json
+[
+  {
+    "ticker": "BHP",
+    "header": "Quarterly Production Report",
+    "price_sensitive": true
+  },
+  {
+    "ticker": "CBA", 
+    "header": "Full Year Results - Record Profit",
+    "price_sensitive": true
+  }
+]
+```
+
+Perfect for further processing with `jq` or integration with other tools. Announcement headers are truncated to 100 characters maximum.
