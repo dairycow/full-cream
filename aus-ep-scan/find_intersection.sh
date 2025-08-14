@@ -16,7 +16,6 @@ SENSITIVE_FILE="$2"
 MOMENTUM_FILE="momentum_normalized.json"
 SENSITIVE_TICKERS_ONLY="sensitive_tickers_only.json"
 INTERSECTION_FILE="intersection.json"
-ALERTED_FILE="alerted_today.json"
 
 # Cleanup function
 cleanup() {
@@ -39,20 +38,12 @@ if [ ! -f "$SENSITIVE_FILE" ]; then
   exit 1
 fi
 
-# Initialize or clean up daily tracking file
-TODAY=$(date +%Y%m%d)
-if [ ! -f "$ALERTED_FILE" ] || [ "$(jq -r '.date // empty' "$ALERTED_FILE" 2>/dev/null)" != "$TODAY" ]; then
-  echo "Initializing daily alert tracking for $TODAY"
-  echo "{\"date\": \"$TODAY\", \"tickers\": []}" > "$ALERTED_FILE"
-fi
-
 echo "Normalizing ticker formats..."
 # Remove ASX: prefix from momentum tickers to match price sensitive format
 jq 'map(sub("ASX:"; ""))' "$MOMENTUM_RAW_FILE" > "$MOMENTUM_FILE"
 echo "Normalized momentum tickers: $(jq 'length' "$MOMENTUM_FILE")"
 
 # Extract ticker arrays for intersection logic
-SENSITIVE_TICKERS_ONLY="sensitive_tickers_only.json"
 jq 'map(.ticker)' "$SENSITIVE_FILE" > "$SENSITIVE_TICKERS_ONLY"
 echo "Extracted announcement tickers: $(jq 'length' "$SENSITIVE_TICKERS_ONLY")"
 
@@ -63,17 +54,11 @@ jq -n \
   --argjson sensitive "$(cat "$SENSITIVE_TICKERS_ONLY")" \
   '$momentum - ($momentum - $sensitive)' > "$INTERSECTION_FILE"
 
-TICKER_COUNT=$(jq 'length' "$INTERSECTION_FILE")
-echo "Found $TICKER_COUNT intersecting tickers"
+INTERSECTION_COUNT=$(jq 'length' "$INTERSECTION_FILE")
+echo "Found $INTERSECTION_COUNT intersecting tickers"
 
-# Find NEW intersections (not already alerted today)
-NEW_INTERSECTIONS=$(jq -n \
-  --argjson current "$(cat "$INTERSECTION_FILE")" \
-  --argjson alerted "$(jq '.tickers' "$ALERTED_FILE")" \
-  '$current - $alerted')
-
-NEW_COUNT=$(echo "$NEW_INTERSECTIONS" | jq 'length')
-echo "Found $NEW_COUNT new intersecting tickers (not yet alerted today)"
+# Read intersections for processing
+INTERSECTIONS=$(cat "$INTERSECTION_FILE")
 
 # Write GitHub workflow summary
 write_github_summary() {
@@ -83,27 +68,23 @@ write_github_summary() {
     echo "**Scan Date:** $(date '+%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_STEP_SUMMARY"
     echo "" >> "$GITHUB_STEP_SUMMARY"
     
-    if [ "$NEW_COUNT" -gt 0 ]; then
-      echo "### NEW ALERTS: $NEW_COUNT Tickers" >> "$GITHUB_STEP_SUMMARY"
+    if [ "$INTERSECTION_COUNT" -gt 0 ]; then
+      echo "### Current Alerts: $INTERSECTION_COUNT Tickers" >> "$GITHUB_STEP_SUMMARY"
       echo "" >> "$GITHUB_STEP_SUMMARY"
       echo "The following tickers have both **5%+ momentum** and **price sensitive announcements**:" >> "$GITHUB_STEP_SUMMARY"
       echo "" >> "$GITHUB_STEP_SUMMARY"
       echo "| Ticker | Announcement | Chart |" >> "$GITHUB_STEP_SUMMARY"
       echo "|--------|--------------|-------|" >> "$GITHUB_STEP_SUMMARY"
-      echo "$NEW_INTERSECTIONS" | jq -r '.[]' | while read ticker; do
+      echo "$INTERSECTIONS" | jq -r '.[]' | while read ticker; do
         # Get announcement header for this ticker
         HEADER=$(jq -r --arg t "$ticker" '.[] | select(.ticker == $t) | .header' "$SENSITIVE_FILE")
         echo "| $ticker | $HEADER | [View Chart](https://www.tradingview.com/chart/?symbol=ASX%3A$ticker) |" >> "$GITHUB_STEP_SUMMARY"
       done
       echo "" >> "$GITHUB_STEP_SUMMARY"
     else
-      echo "### No New Alerts" >> "$GITHUB_STEP_SUMMARY"
+      echo "### No Alerts" >> "$GITHUB_STEP_SUMMARY"
       echo "" >> "$GITHUB_STEP_SUMMARY"
-      if [ "$TICKER_COUNT" -gt 0 ]; then
-        echo "Found $TICKER_COUNT intersecting tickers, but all were already alerted today." >> "$GITHUB_STEP_SUMMARY"
-      else
-        echo "No intersecting tickers found." >> "$GITHUB_STEP_SUMMARY"
-      fi
+      echo "No intersecting tickers found." >> "$GITHUB_STEP_SUMMARY"
       echo "" >> "$GITHUB_STEP_SUMMARY"
     fi
     
@@ -111,44 +92,29 @@ write_github_summary() {
     echo "" >> "$GITHUB_STEP_SUMMARY"
     echo "- **Momentum tickers:** $(jq 'length' "$MOMENTUM_FILE")" >> "$GITHUB_STEP_SUMMARY"
     echo "- **Price sensitive tickers:** $(jq 'length' "$SENSITIVE_TICKERS_ONLY")" >> "$GITHUB_STEP_SUMMARY"
-    echo "- **Total intersections:** $TICKER_COUNT" >> "$GITHUB_STEP_SUMMARY"
-    echo "- **New alerts:** $NEW_COUNT" >> "$GITHUB_STEP_SUMMARY"
-    
-    if [ "$TICKER_COUNT" -gt "$NEW_COUNT" ]; then
-      echo "- **Previously alerted:** $((TICKER_COUNT - NEW_COUNT))" >> "$GITHUB_STEP_SUMMARY"
-    fi
+    echo "- **Current intersections:** $INTERSECTION_COUNT" >> "$GITHUB_STEP_SUMMARY"
     echo "" >> "$GITHUB_STEP_SUMMARY"
   fi
 }
 
-if [ "$NEW_COUNT" -gt 0 ]; then
+if [ "$INTERSECTION_COUNT" -gt 0 ]; then
   echo ""
-  echo "NEW ALERT: Found $NEW_COUNT new tickers with both 5%+ momentum AND price sensitive announcements!"
+  echo "ALERT: Found $INTERSECTION_COUNT tickers with both 5%+ momentum AND price sensitive announcements!"
   echo ""
-  echo "NEW MOMENTUM + PRICE SENSITIVE TICKERS:"
-  echo "$NEW_INTERSECTIONS" | jq -r '.[]' | while read ticker; do
+  echo "INTERSECTING TICKERS:"
+  echo "$INTERSECTIONS" | jq -r '.[]' | while read ticker; do
     echo "  - $ticker"
   done
   echo ""
-  echo "Raw JSON: $NEW_INTERSECTIONS"
+  echo "Raw JSON: $INTERSECTIONS"
   echo ""
   echo "These tickers have both:"
   echo "  - Gained 5%+ from market open today"
   echo "  - Released price sensitive announcements"
   echo ""
-  
-  # Update alerted list with new tickers
-  jq --argjson new "$NEW_INTERSECTIONS" '.tickers += $new | .tickers |= unique' "$ALERTED_FILE" > tmp_alerted && mv tmp_alerted "$ALERTED_FILE"
-  echo "Updated daily alert tracking with $NEW_COUNT new tickers"
-  echo ""
-  echo "Scan completed successfully - NEW intersecting tickers found and alerted"
-elif [ "$TICKER_COUNT" -gt 0 ]; then
-  echo "Found $TICKER_COUNT intersecting tickers, but all were already alerted today"
-  echo "Previously alerted: $(jq -c '.tickers' "$ALERTED_FILE")"
-  echo "Current intersections: $(jq -c '.' "$INTERSECTION_FILE")"
-  echo "Scan completed successfully - no new alerts needed"
+  echo "Scan completed successfully - intersecting tickers found"
 else
-  echo "No intersecting tickers found today"
+  echo "No intersecting tickers found"
   echo "Momentum tickers: $(jq -c '.' "$MOMENTUM_FILE")"
   echo "Price sensitive tickers: $(jq -c '.' "$SENSITIVE_TICKERS_ONLY")"
   echo "Scan completed successfully - no intersections"

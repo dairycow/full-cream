@@ -5,8 +5,8 @@
 # Uses only tools available in GitHub Actions runners by default
 
 OUTPUT_FILE="${1:-asx_announcements.json}"
-# ASX_URL="https://www.asx.com.au/asx/v2/statistics/todayAnns.do"
-ASX_URL="https://www.asx.com.au/asx/v2/statistics/prevBusDayAnns.do"
+ASX_URL="https://www.asx.com.au/asx/v2/statistics/todayAnns.do"
+# ASX_URL="https://www.asx.com.au/asx/v2/statistics/prevBusDayAnns.do"
 
 # Fetch HTML and extract price sensitive announcements with headers
 # Strategy: Find table rows containing pricesens img, then extract ticker and announcement header
@@ -35,11 +35,6 @@ awk '
           gsub(/&lt;/, "<", header)
           gsub(/&gt;/, ">", header)
           gsub(/&quot;/, "\"", header)
-          
-          # Truncate to 100 characters
-          if (length(header) > 100) {
-            header = substr(header, 1, 97) "..."
-          }
         }
       }
       
@@ -53,7 +48,19 @@ awk '
     in_row = 0
   }
 ' | \
-jq -s '.' > "$OUTPUT_FILE"
+jq -s '
+  # Group by ticker and consolidate headers
+  group_by(.ticker) | 
+  map({
+    ticker: .[0].ticker,
+    header: (
+      map(.header) | 
+      join(" | ") | 
+      if length > 100 then .[0:97] + "..." else . end
+    ),
+    price_sensitive: true
+  })
+' > "$OUTPUT_FILE"
 
 if [ $? -eq 0 ] && [ -s "$OUTPUT_FILE" ]; then
   echo "ASX price sensitive announcements saved to $OUTPUT_FILE"
