@@ -5,7 +5,9 @@
 # Uses only tools available in GitHub Actions runners by default
 
 OUTPUT_FILE="${1:-asx_announcements.json}"
-ASX_URL="https://www.asx.com.au/asx/v2/statistics/prevBusDayAnns.do"
+ASX_URL="https://www.asx.com.au/asx/v2/statistics/todayAnns.do"
+# For debugging use:
+# ASX_URL="https://www.asx.com.au/asx/v2/statistics/prevBusDayAnns.do"
 
 # Create temporary files
 TEMP_AWK_FILE=$(mktemp)
