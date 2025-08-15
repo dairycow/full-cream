@@ -32,7 +32,7 @@ echo "Parsing price sensitive announcements..."
 
 # Extract price sensitive announcements
 awk '
-  /<tr class=""/ { row = ""; in_row = 1 }
+  /<tr[ >]/ { row = ""; in_row = 1 }
   in_row { row = row $0 "\n" }
   /<\/tr>/ && in_row { 
     if (row ~ /pricesens/) {
