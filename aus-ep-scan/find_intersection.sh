@@ -14,13 +14,15 @@ fi
 MOMENTUM_RAW_FILE="$1"
 SENSITIVE_FILE="$2"
 MOMENTUM_FILE="momentum_normalized.json"
+MOMENTUM_TICKERS_ONLY="momentum_tickers_only.json"
+MOMENTUM_PERCENTAGES="momentum_percentages.json"
 SENSITIVE_TICKERS_ONLY="sensitive_tickers_only.json"
 INTERSECTION_FILE="intersection.json"
 
 # Cleanup function
 cleanup() {
   echo "Cleaning up temporary files..."
-  rm -f "$MOMENTUM_FILE" "$SENSITIVE_TICKERS_ONLY" "$INTERSECTION_FILE"
+  rm -f "$MOMENTUM_FILE" "$MOMENTUM_TICKERS_ONLY" "$MOMENTUM_PERCENTAGES" "$SENSITIVE_TICKERS_ONLY" "$INTERSECTION_FILE"
   echo "Cleanup complete"
 }
 
@@ -38,19 +40,25 @@ if [ ! -f "$SENSITIVE_FILE" ]; then
   exit 1
 fi
 
-echo "Normalizing ticker formats..."
-# Remove ASX: prefix from momentum tickers to match price sensitive format
-jq 'map(sub("ASX:"; ""))' "$MOMENTUM_RAW_FILE" > "$MOMENTUM_FILE"
+echo "Processing momentum data..."
+# Normalize momentum tickers (remove ASX: prefix) and preserve percentage data
+jq 'map({ticker: (.ticker | sub("ASX:"; "")), percentage: .percentage})' "$MOMENTUM_RAW_FILE" > "$MOMENTUM_FILE"
 echo "Normalized momentum tickers: $(jq 'length' "$MOMENTUM_FILE")"
 
-# Extract ticker arrays for intersection logic
+# Extract just tickers for intersection logic
+jq 'map(.ticker)' "$MOMENTUM_FILE" > "$MOMENTUM_TICKERS_ONLY"
+
+# Create percentage lookup map for GitHub summary
+jq 'map({(.ticker): .percentage}) | add' "$MOMENTUM_FILE" > "$MOMENTUM_PERCENTAGES"
+
+# Extract announcement ticker arrays for intersection logic
 jq 'map(.ticker)' "$SENSITIVE_FILE" > "$SENSITIVE_TICKERS_ONLY"
 echo "Extracted announcement tickers: $(jq 'length' "$SENSITIVE_TICKERS_ONLY")"
 
 echo "Finding ticker intersections..."
 # Create intersection using jq (compare ticker arrays)
 jq -n \
-  --argjson momentum "$(cat "$MOMENTUM_FILE")" \
+  --argjson momentum "$(cat "$MOMENTUM_TICKERS_ONLY")" \
   --argjson sensitive "$(cat "$SENSITIVE_TICKERS_ONLY")" \
   '$momentum - ($momentum - $sensitive)' > "$INTERSECTION_FILE"
 
@@ -73,12 +81,18 @@ write_github_summary() {
       echo "" >> "$GITHUB_STEP_SUMMARY"
       echo "The following tickers have both **5%+ momentum** and **price sensitive announcements**:" >> "$GITHUB_STEP_SUMMARY"
       echo "" >> "$GITHUB_STEP_SUMMARY"
-      echo "| Ticker | Announcement | Chart |" >> "$GITHUB_STEP_SUMMARY"
-      echo "|--------|--------------|-------|" >> "$GITHUB_STEP_SUMMARY"
+      echo "| Ticker | % Up | Announcement | Chart |" >> "$GITHUB_STEP_SUMMARY"
+      echo "|--------|------|--------------|-------|" >> "$GITHUB_STEP_SUMMARY"
       echo "$INTERSECTIONS" | jq -r '.[]' | while read ticker; do
-        # Get announcement header for this ticker
+        # Get percentage and announcement header for this ticker
+        PERCENTAGE=$(jq -r --arg t "$ticker" '.[$t] // "N/A"' "$MOMENTUM_PERCENTAGES")
         HEADER=$(jq -r --arg t "$ticker" '.[] | select(.ticker == $t) | .header' "$SENSITIVE_FILE")
-        echo "| $ticker | $HEADER | [View Chart](https://www.tradingview.com/chart/?symbol=ASX%3A$ticker) |" >> "$GITHUB_STEP_SUMMARY"
+        if [ "$PERCENTAGE" != "N/A" ]; then
+          PERCENTAGE_DISPLAY="+${PERCENTAGE}%"
+        else
+          PERCENTAGE_DISPLAY="N/A"
+        fi
+        echo "| $ticker | $PERCENTAGE_DISPLAY | $HEADER | [View Chart](https://www.tradingview.com/chart/?symbol=ASX%3A$ticker) |" >> "$GITHUB_STEP_SUMMARY"
       done
       echo "" >> "$GITHUB_STEP_SUMMARY"
     else

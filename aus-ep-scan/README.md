@@ -25,7 +25,8 @@ Scans TradingView for Australian stocks up >5% from market open.
 **Example:**
 ```bash
 ./tv_scan.sh my_momentum.json
-jq '.[]' my_momentum.json  # List all tickers
+jq '.[] | .ticker' my_momentum.json  # List all tickers
+jq '.[] | "\(.ticker): +\(.percentage)%"' my_momentum.json  # List with percentages
 jq 'length' my_momentum.json  # Count
 ```
 
@@ -66,7 +67,11 @@ The GitHub Actions workflow (`../.github/workflows/aus-ep-scan.yml`) runs this s
 
 **TradingView Scanner (`tv_scan.sh`):**
 ```json
-["ASX:BHP", "ASX:CBA", "ASX:WBC"]
+[
+  {"ticker": "ASX:BHP", "percentage": 12.5},
+  {"ticker": "ASX:CBA", "percentage": 8.2},
+  {"ticker": "ASX:WBC", "percentage": 6.7}
+]
 ```
 
 **ASX Announcements (`asx_ann_scan.sh`):**
@@ -86,3 +91,14 @@ The GitHub Actions workflow (`../.github/workflows/aus-ep-scan.yml`) runs this s
 ```
 
 Perfect for further processing with `jq` or integration with other tools. Announcement headers are truncated to 100 characters maximum.
+
+## GitHub Workflow Summary
+
+The automated workflow generates a summary table with enhanced information:
+
+| Ticker | % Up | Announcement | Chart |
+|--------|------|--------------|-------|
+| DBO | +26.32% | Drilling to Commence - Phoenix Copper Project | [View Chart] |
+| GTE | +15.38% | Gravity Survey Defines Potential Core of VHMS Cu-Au System | [View Chart] |
+
+This provides immediate visibility into both momentum strength and announcement context.

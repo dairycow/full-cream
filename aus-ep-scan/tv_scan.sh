@@ -16,7 +16,7 @@ PAYLOAD='{
   "filter": [{"left": "change_from_open", "operation": "greater", "right": 5}]
 }'
 
-# Make API request and extract tickers
+# Make API request and extract tickers with percentages
 curl -s -X POST "https://scanner.tradingview.com/australia/scan" \
   -H "content-type: application/json" \
   -H "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
@@ -27,7 +27,7 @@ curl -s -X POST "https://scanner.tradingview.com/australia/scan" \
   -H "sec-fetch-mode: cors" \
   -H "sec-fetch-dest: empty" \
   -d "$PAYLOAD" | \
-jq '[.data[].s]' > "$OUTPUT_FILE"
+jq '[.data[] | {ticker: .s, percentage: (.d[2] | tonumber | . * 100 | round / 100)}]' > "$OUTPUT_FILE"
 
 if [ $? -eq 0 ]; then
   echo "TradingView momentum tickers saved to $OUTPUT_FILE"
