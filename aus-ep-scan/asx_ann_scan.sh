@@ -79,7 +79,8 @@ jq -s '
     ticker: .[0].ticker,
     header: (
       map(.header) | 
-      join(" | ") | 
+      unique | 
+      join(" • ") | 
       if length > 100 then .[0:97] + "..." else . end
     ),
     price_sensitive: true
@@ -89,6 +90,12 @@ jq -s '
 if [ $? -eq 0 ] && [ -s "$OUTPUT_FILE" ]; then
   echo "ASX price sensitive announcements saved to $OUTPUT_FILE"
   echo "Count: $(jq 'length' "$OUTPUT_FILE")"
+  
+  # Validate no duplicate tickers exist
+  DUPLICATE_COUNT=$(jq -r 'group_by(.ticker) | map(select(length > 1)) | length' "$OUTPUT_FILE")
+  if [ "$DUPLICATE_COUNT" -gt 0 ]; then
+    echo "Warning: Found $DUPLICATE_COUNT duplicate ticker groups after consolidation" >&2
+  fi
 else
   echo "Error: Failed to process ASX data" >&2
   exit 1
