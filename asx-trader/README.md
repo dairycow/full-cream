@@ -4,7 +4,7 @@ An automated paper trading system for ASX stocks that detects price-sensitive an
 
 ## Status
 
-🚧 **Under Development** - Phase 1: Foundation Setup Complete
+🚧 **Under Development** - Phase 3: Core Trading Logic Complete
 
 ## Quick Start
 
@@ -41,6 +41,11 @@ An automated paper trading system for ASX stocks that detects price-sensitive an
 5. **Initialize database**
    ```bash
    python scripts/init_database.py
+   ```
+
+6. **Test IB connection** (requires IB Gateway running)
+   ```bash
+   python scripts/test_ib_connection.py
    ```
 
 ## Configuration
@@ -93,18 +98,38 @@ asx-trader/
 - [x] Database schema (SQLAlchemy models)
 - [x] Logging setup (loguru)
 - [x] Configuration templates
+- [x] Configuration loader (YAML + .env)
+- [x] Interactive Brokers client
+  - [x] Connection management with auto-reconnect
+  - [x] Contract creation for ASX stocks
+  - [x] Market data requests (real-time & historical)
+  - [x] Order execution (market & stop orders)
+  - [x] Account management (positions, balances)
+  - [x] Connection test script
+- [x] Core Trading Signals
+  - [x] Gap detector (3-15% gap-up detection)
+  - [x] Opening range tracker (first 15 minutes)
+  - [x] Catalyst scorer (announcement keyword scoring)
+  - [x] Breakout detection (OR high breakout)
+- [x] Risk Management
+  - [x] Position sizer (2% risk per trade)
+  - [x] Risk-based position sizing
+  - [x] Maximum position constraints
+- [x] Strategy Logic
+  - [x] Entry logic (catalyst + gap + OR breakout)
+  - [x] Exit logic (stop loss, EOD close, trailing stop)
+  - [x] Complete signal validation
 
 ### 🚧 In Progress
-- [ ] Interactive Brokers client
-- [ ] Gap detection
-- [ ] Opening range tracking
-- [ ] Entry/exit logic
+- [ ] Trade execution engine
+- [ ] Position tracking and monitoring
+- [ ] Main trading loop
 
 ### 📋 Upcoming
-- [ ] Risk management
-- [ ] Trade execution engine
+- [ ] Kill switch implementation
 - [ ] Deployment scripts
 - [ ] Testing and validation
+- [ ] Performance analytics
 
 ## Trading Strategy
 
@@ -178,5 +203,5 @@ For issues, questions, or contributions, please open an issue on GitHub.
 
 ---
 
-**Current Phase**: Foundation Setup (Week 1)
-**Next Milestone**: Interactive Brokers Integration (Week 1-2)
+**Current Phase**: Core Trading Logic (Week 3)
+**Next Milestone**: Trade Execution Engine & Main Loop (Week 4)
