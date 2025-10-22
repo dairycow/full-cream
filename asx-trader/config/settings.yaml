@@ -1,0 +1,221 @@
+# ASX Trading System Configuration
+# This file contains trading parameters and strategy settings
+# Adjust these values based on your risk tolerance and strategy preferences
+
+# === BROKER CONFIGURATION ===
+broker:
+  name: "interactive_brokers"
+  connection_timeout: 30  # seconds
+  retry_attempts: 3
+  retry_delay: 5  # seconds
+
+# === TRADING HOURS ===
+# Times in AEST/AEDT (Sydney time)
+trading_hours:
+  pre_market_start: "07:00"  # Start scraping announcements
+  market_open: "10:00"
+  opening_range_end: "10:15"  # OR = first 15 minutes
+  breakout_monitoring_start: "10:15"
+  breakout_monitoring_end: "15:45"
+  eod_close: "15:50"  # Close all positions
+  market_close: "16:00"
+  post_market_end: "16:30"  # Final cleanup
+
+# === RISK MANAGEMENT ===
+risk:
+  # Position Sizing
+  risk_per_trade_percent: 2.0  # Risk 2% of capital per trade
+  max_position_size_percent: 10.0  # Max 10% of capital in one position
+  max_concurrent_positions: 3  # Maximum number of open positions
+
+  # Kill Switch
+  max_daily_loss_percent: 5.0  # Halt trading if down 5% on the day
+  max_weekly_loss_percent: 10.0  # Future: weekly circuit breaker
+
+  # Stop Loss
+  stop_loss_type: "opening_range_low"  # Options: opening_range_low, lod, percentage
+  stop_loss_buffer_cents: 0.01  # Add 1 cent buffer below OR low
+  trailing_stop_enabled: false  # Future: implement trailing stops
+  trailing_stop_activation_r: 2.0  # Activate after 2R profit
+
+  # Minimum Capital
+  min_account_balance: 10000  # Minimum $10k to trade
+
+# === ENTRY CRITERIA ===
+entry:
+  # Gap Detection
+  min_gap_percent: 3.0  # Minimum 3% gap up
+  max_gap_percent: 15.0  # Maximum 15% gap (avoid excessive gaps)
+
+  # Volume Confirmation
+  min_relative_volume: 1.5  # 1.5x average volume
+  min_opening_volume: 100000  # Minimum 100k shares at open
+
+  # Opening Range Breakout
+  breakout_confirmation_ticks: 2  # Break OR high by 2 ticks
+  breakout_volume_surge: 1.3  # 30% volume increase on breakout
+
+  # Price Filters
+  min_stock_price: 0.50  # Minimum $0.50 (avoid penny stocks)
+  max_stock_price: 50.00  # Maximum $50 (adjust based on capital)
+
+  # Time-based Filters
+  max_entry_time: "15:30"  # Don't enter after 3:30 PM
+  min_time_before_close: 30  # Minutes before close
+
+# === EXIT CRITERIA ===
+exit:
+  # Stop Loss
+  use_hard_stop: true  # Place stop order with broker
+  mental_stop_only: false  # Use software monitoring instead
+
+  # End of Day
+  eod_close_time: "15:50"
+  eod_close_method: "market"  # Options: market, limit
+
+  # Profit Targets (Optional - future enhancement)
+  profit_target_enabled: false
+  profit_target_r_multiple: 3.0  # Take profit at 3R
+
+  # Trailing Stop (Future)
+  trailing_stop_enabled: false
+  trailing_stop_trigger_r: 2.0
+  trailing_stop_distance_percent: 5.0
+
+# === CATALYST SCORING ===
+catalysts:
+  # Announcement Types (Scored 1-10)
+  keywords:
+    high_impact:  # Score 8-10
+      - "takeover"
+      - "acquisition"
+      - "merger"
+      - "binding agreement"
+      - "strategic partnership"
+      - "major contract"
+      - "resource upgrade"
+      - "discovery"
+
+    medium_impact:  # Score 5-7
+      - "earnings upgrade"
+      - "contract win"
+      - "expansion"
+      - "partnership"
+      - "positive update"
+      - "drilling results"
+
+    low_impact:  # Score 2-4
+      - "update"
+      - "announcement"
+      - "presentation"
+      - "appointment"
+
+  # Negative Keywords (Auto-reject)
+  negative_keywords:
+    - "downgrade"
+    - "loss"
+    - "suspension"
+    - "administration"
+    - "investigation"
+    - "breach"
+    - "delay"
+    - "failure"
+
+  # Minimum catalyst score to consider
+  min_catalyst_score: 5
+
+# === WATCHLIST GENERATION ===
+watchlist:
+  max_symbols: 20  # Maximum symbols on daily watchlist
+  min_market_cap: 50000000  # Minimum $50M market cap
+  excluded_sectors:
+    - "Financials-Banks"  # Banks have different dynamics
+    # Add more sectors as needed
+
+  excluded_symbols:
+    # Add symbols to permanently exclude
+    # - "XYZ.AX"
+
+# === ORDER EXECUTION ===
+orders:
+  order_type: "market"  # Options: market, limit
+  limit_order_offset_percent: 0.1  # 0.1% above ask for limit orders
+  order_timeout_seconds: 60
+  fill_verification_delay: 2  # Wait 2 seconds before checking fill
+  max_slippage_percent: 0.5  # Cancel if slippage > 0.5%
+
+# === MONITORING ===
+monitoring:
+  # Data Update Frequencies
+  market_data_interval: 1  # seconds - real-time bar updates
+  position_check_interval: 5  # seconds - check stops
+  account_check_interval: 60  # seconds - update account balance
+
+  # Health Checks
+  connection_health_check: 30  # seconds
+  database_health_check: 300  # seconds (5 minutes)
+
+# === LOGGING ===
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  console_output: true
+  file_output: true
+  rotation: "100 MB"
+  retention: "30 days"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}"
+
+  # Separate logs for different components
+  separate_trade_log: true
+  separate_error_log: true
+
+# === DATABASE ===
+database:
+  type: "sqlite"
+  path: "data/asx_trader.db"
+  backup_enabled: true
+  backup_interval: "daily"  # daily, weekly
+  backup_retention_days: 90
+
+  # Connection Pool (for future PostgreSQL migration)
+  pool_size: 5
+  max_overflow: 10
+
+# === NOTIFICATIONS (Future Enhancement) ===
+notifications:
+  enabled: false
+  email_alerts: false
+  # email: "YOUR_EMAIL@example.com"
+
+  # Alert Triggers
+  alerts:
+    - "trade_entry"
+    - "trade_exit"
+    - "stop_hit"
+    - "kill_switch_triggered"
+    - "connection_lost"
+    - "critical_error"
+
+# === BACKTESTING (Future) ===
+backtesting:
+  enabled: false
+  start_date: "2024-01-01"
+  end_date: "2024-12-31"
+  initial_capital: 100000
+
+# === PAPER TRADING ===
+paper_trading:
+  enabled: true  # ALWAYS start with paper trading
+  simulated_fills: false  # Use real IB paper account
+  commission_per_trade: 6.00  # Approximate IB commission
+
+# === DEVELOPMENT ===
+development:
+  debug_mode: false
+  test_mode: false
+  mock_broker: false
+  mock_market_data: false
+
+  # Override market hours for testing
+  override_market_hours: false
+  test_market_open: "09:00"
+  test_market_close: "17:00"
