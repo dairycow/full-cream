@@ -10,7 +10,8 @@ An automated paper trading system for ASX stocks that detects price-sensitive an
 
 ### Prerequisites
 
-- Python 3.10 or higher
+- Python 3.13 or higher
+- [uv](https://github.com/astral-sh/uv) package manager
 - Interactive Brokers Paper Trading Account
 - Digital Ocean droplet (or similar VPS) in Sydney/Singapore region
 
@@ -21,15 +22,14 @@ An automated paper trading system for ASX stocks that detects price-sensitive an
    cd asx-trader
    ```
 
-2. **Create virtual environment**
+2. **Create virtual environment with uv**
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   uv venv --python 3.13
    ```
 
 3. **Install dependencies**
    ```bash
-   pip install -r requirements.txt
+   uv pip install -e ".[dev]"
    ```
 
 4. **Set up environment variables**
@@ -40,12 +40,12 @@ An automated paper trading system for ASX stocks that detects price-sensitive an
 
 5. **Initialize database**
    ```bash
-   python scripts/init_database.py
+   uv run python scripts/init_database.py
    ```
 
 6. **Test IB connection** (requires IB Gateway running)
    ```bash
-   python scripts/test_ib_connection.py
+   uv run python scripts/test_ib_connection.py
    ```
 
 ## Configuration
