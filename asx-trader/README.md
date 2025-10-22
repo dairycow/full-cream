@@ -4,7 +4,7 @@ An automated paper trading system for ASX stocks that detects price-sensitive an
 
 ## Status
 
-🚧 **Under Development** - Phase 1: Foundation Setup Complete
+🚧 **Under Development** - Phase 2: Interactive Brokers Integration Complete
 
 ## Quick Start
 
@@ -41,6 +41,11 @@ An automated paper trading system for ASX stocks that detects price-sensitive an
 5. **Initialize database**
    ```bash
    python scripts/init_database.py
+   ```
+
+6. **Test IB connection** (requires IB Gateway running)
+   ```bash
+   python scripts/test_ib_connection.py
    ```
 
 ## Configuration
@@ -93,9 +98,16 @@ asx-trader/
 - [x] Database schema (SQLAlchemy models)
 - [x] Logging setup (loguru)
 - [x] Configuration templates
+- [x] Configuration loader (YAML + .env)
+- [x] Interactive Brokers client
+  - [x] Connection management with auto-reconnect
+  - [x] Contract creation for ASX stocks
+  - [x] Market data requests (real-time & historical)
+  - [x] Order execution (market & stop orders)
+  - [x] Account management (positions, balances)
+  - [x] Connection test script
 
 ### 🚧 In Progress
-- [ ] Interactive Brokers client
 - [ ] Gap detection
 - [ ] Opening range tracking
 - [ ] Entry/exit logic
@@ -178,5 +190,5 @@ For issues, questions, or contributions, please open an issue on GitHub.
 
 ---
 
-**Current Phase**: Foundation Setup (Week 1)
-**Next Milestone**: Interactive Brokers Integration (Week 1-2)
+**Current Phase**: Interactive Brokers Integration (Week 2)
+**Next Milestone**: Core Trading Logic (Week 2-3)
