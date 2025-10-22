@@ -4,7 +4,7 @@ An automated paper trading system for ASX stocks that detects price-sensitive an
 
 ## Status
 
-🚧 **Under Development** - Phase 2: Interactive Brokers Integration Complete
+🚧 **Under Development** - Phase 3: Core Trading Logic Complete
 
 ## Quick Start
 
@@ -106,17 +106,30 @@ asx-trader/
   - [x] Order execution (market & stop orders)
   - [x] Account management (positions, balances)
   - [x] Connection test script
+- [x] Core Trading Signals
+  - [x] Gap detector (3-15% gap-up detection)
+  - [x] Opening range tracker (first 15 minutes)
+  - [x] Catalyst scorer (announcement keyword scoring)
+  - [x] Breakout detection (OR high breakout)
+- [x] Risk Management
+  - [x] Position sizer (2% risk per trade)
+  - [x] Risk-based position sizing
+  - [x] Maximum position constraints
+- [x] Strategy Logic
+  - [x] Entry logic (catalyst + gap + OR breakout)
+  - [x] Exit logic (stop loss, EOD close, trailing stop)
+  - [x] Complete signal validation
 
 ### 🚧 In Progress
-- [ ] Gap detection
-- [ ] Opening range tracking
-- [ ] Entry/exit logic
+- [ ] Trade execution engine
+- [ ] Position tracking and monitoring
+- [ ] Main trading loop
 
 ### 📋 Upcoming
-- [ ] Risk management
-- [ ] Trade execution engine
+- [ ] Kill switch implementation
 - [ ] Deployment scripts
 - [ ] Testing and validation
+- [ ] Performance analytics
 
 ## Trading Strategy
 
@@ -190,5 +203,5 @@ For issues, questions, or contributions, please open an issue on GitHub.
 
 ---
 
-**Current Phase**: Interactive Brokers Integration (Week 2)
-**Next Milestone**: Core Trading Logic (Week 2-3)
+**Current Phase**: Core Trading Logic (Week 3)
+**Next Milestone**: Trade Execution Engine & Main Loop (Week 4)
