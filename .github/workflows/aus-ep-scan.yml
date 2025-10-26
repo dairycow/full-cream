@@ -1,9 +1,9 @@
 name: Australian Equity Price Scan
 
 on:
-  schedule:
-    # At 11:00 AM and 2:00 PM AEST (00:00 and 03:00 UTC)
-    - cron: '0 0,3 * * 1-5'
+  # schedule:
+  #   # At 11:00 AM and 2:00 PM AEST (00:00 and 03:00 UTC)
+  #   - cron: '0 0,3 * * 1-5'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
